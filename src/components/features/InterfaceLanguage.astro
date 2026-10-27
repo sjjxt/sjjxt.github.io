@@ -1,0 +1,122 @@
+<script>
+	import {
+		LANGUAGE_STORAGE_KEY,
+		readInterfaceLanguage,
+		translateInterfaceText,
+		type InterfaceLanguage,
+	} from "@/i18n/interface-language";
+
+	// Keep authored content and third-party widgets in their original language.
+	const excluded = [
+		"script", "style", "code", "pre", "textarea", "svg",
+		"[data-no-translate]", '[translate="no"]', ".custom-md",
+		"[data-dynamic-content]", "[data-dynamic-feed]", "[data-post-title]",
+		"#post-list-container", "#latest-dynamics a:not([href$='/dynamic/'])",
+		".banner-title", "#banner-subtitle", ".banner-post-title", ".banner-post-description",
+		".media-card h3", ".media-card p[title]", ".media-card img",
+		"[data-comment-provider]", ".waline", ".giscus", ".twikoo",
+	].join(",");
+	const attributes = ["aria-label", "title", "placeholder", "alt"];
+	const originals = new WeakMap<Node, Map<string, { source: string; last: string }>>();
+	let language: InterfaceLanguage = readInterfaceLanguage();
+
+	function translateValue(node: Node, key: string, value: string): string {
+		let values = originals.get(node);
+		if (!values) {
+			values = new Map();
+			originals.set(node, values);
+		}
+		let record = values.get(key);
+		if (!record || record.last !== value) {
+			record = { source: value, last: value };
+			values.set(key, record);
+		}
+		// Always translate from the original, avoiding ambiguous reverse mappings.
+		record.last = language === "en"
+			? translateInterfaceText(record.source, "en")
+			: record.source;
+		return record.last;
+	}
+
+	function translateTree(root: Node) {
+		const parent = root instanceof Element ? root : root.parentElement;
+		if (!parent || parent.closest(excluded)) return;
+		if (root instanceof Text) {
+			const value = translateValue(root, "text", root.data);
+			if (root.data !== value) root.data = value;
+			return;
+		}
+		if (root instanceof Element) {
+			for (const attribute of attributes) {
+				const source = root.getAttribute(attribute);
+				if (source === null) continue;
+				const value = translateValue(root, attribute, source);
+				if (source !== value) root.setAttribute(attribute, value);
+			}
+		}
+		for (const child of root.childNodes) translateTree(child);
+	}
+
+	const observer = new MutationObserver((mutations) => {
+		observer.disconnect();
+		for (const mutation of mutations) {
+			if (mutation.type === "childList") {
+				for (const node of mutation.addedNodes) translateTree(node);
+			} else {
+				translateTree(mutation.target);
+			}
+		}
+		observe();
+	});
+
+	function observe() {
+		observer.observe(document.body, {
+			subtree: true,
+			childList: true,
+			characterData: true,
+			attributes: true,
+			attributeFilter: attributes,
+		});
+	}
+
+	function applyLanguage() {
+		observer.disconnect();
+		document.documentElement.lang = language;
+		translateTree(document.body);
+		for (const button of document.querySelectorAll<HTMLButtonElement>("[data-language-switch]")) {
+			const label = button.querySelector<HTMLElement>("[data-language-label]");
+			if (label) {
+				label.textContent = language === "en" ? "中文" : "EN";
+				label.lang = language === "en" ? "zh-CN" : "en";
+			}
+			const hint = language === "en" ? "切换界面为中文" : "Switch interface to English";
+			button.setAttribute("aria-label", hint);
+			button.title = hint;
+		}
+		observe();
+	}
+
+	document.addEventListener("click", (event) => {
+		if (!(event.target instanceof Element) || !event.target.closest("[data-language-switch]")) return;
+		language = language === "en" ? "zh-CN" : "en";
+		try {
+			localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+		} catch {
+			// Keep the current tab usable without storage access.
+		}
+		applyLanguage();
+	});
+	window.addEventListener("storage", (event) => {
+		if (event.key === LANGUAGE_STORAGE_KEY) {
+			language = readInterfaceLanguage();
+			applyLanguage();
+		}
+	});
+	document.addEventListener("astro:page-load", applyLanguage);
+	document.addEventListener("swup:content:replace", applyLanguage);
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", applyLanguage, { once: true });
+	} else {
+		applyLanguage();
+	}
+</script>
