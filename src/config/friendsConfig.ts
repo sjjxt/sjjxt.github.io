@@ -21,7 +21,26 @@ export const friendsPageConfig: FriendsPageConfig = {
 };
 
 // 友链配置
-export const friendsConfig: FriendLink[] = [];
+export const friendsConfig: FriendLink[] = [
+	{
+		title: "NQBMotoki",
+		imgurl: "https://avatars.githubusercontent.com/u/180892702?v=4",
+		desc: "NQBMotoki 的 GitHub 主页",
+		siteurl: "https://github.com/NQBMotoki",
+		tags: ["GitHub"],
+		weight: 2,
+		enabled: true,
+	},
+	{
+		title: "yearzen1",
+		imgurl: "https://avatars.githubusercontent.com/u/148217763?v=4",
+		desc: "yearzen1 的 GitHub 主页",
+		siteurl: "https://github.com/yearzen1",
+		tags: ["GitHub"],
+		weight: 1,
+		enabled: true,
+	},
+];
 
 // 获取启用的友链并进行排序
 export const getEnabledFriends = (): FriendLink[] => {
