@@ -48,6 +48,7 @@ import {
 	setWavesEnabled,
 } from "@utils/setting-utils";
 import { onMount } from "svelte";
+import { getSnowEnabled, setSnowEnabled } from "@/utils/snow-settings";
 import Icon from "@/components/common/Icon.svelte";
 import {
 	backgroundWallpaper,
@@ -103,6 +104,7 @@ const defaultBannerTitleEnabled = getDefaultBannerTitleEnabled();
 let bannerCarouselEnabled = $state(true);
 const defaultBannerCarouselEnabled = getDefaultBannerCarouselEnabled();
 let sakuraEnabled = $state(true);
+let snowEnabled = $state(false);
 const defaultSakuraEnabled = getDefaultSakuraEnabled();
 let overlayOpacity = $state(getDefaultOverlayOpacity());
 const defaultOverlayOpacity = getDefaultOverlayOpacity();
@@ -549,6 +551,7 @@ onMount(() => {
 
 	// 从localStorage读取樱花特效状态
 	sakuraEnabled = getStoredSakuraEnabled();
+	snowEnabled = getSnowEnabled();
 
 	// 从localStorage读取卡片样式状态
 	cardBorderEnabled = getStoredCardBorderEnabled();
@@ -1029,6 +1032,16 @@ $effect(() => {
 
 	<!-- Effects Tab: Sakura -->
 	{#if activeTab === "effects"}
+		<button
+			class="w-full btn-regular rounded-md py-2 px-3 mb-3 flex items-center gap-3 text-left"
+			role="switch"
+			aria-checked={snowEnabled}
+			onclick={() => { snowEnabled = !snowEnabled; setSnowEnabled(snowEnabled); }}
+		>
+			<span aria-hidden="true">❄</span>
+			<span class="text-sm flex-1">雪花特效</span>
+			<span class="text-sm">{snowEnabled ? "开启" : "关闭"}</span>
+		</button>
 		{#if isSakuraSwitchable}
 		<div class="">
 			<div class="section-title">

@@ -1,0 +1,84 @@
+<canvas id="snow-effect" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;" />
+
+<script>
+	import { snowConfig } from "@/config";
+	import { getSnowEnabled } from "@/utils/snow-settings";
+
+	const canvas = document.getElementById("snow-effect") as HTMLCanvasElement;
+	const context = canvas.getContext("2d");
+	if (context) {
+		const ctx = context;
+		const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+		let enabled = getSnowEnabled();
+		let frame = 0;
+		let previous = 0;
+		let width = 0;
+		let height = 0;
+		let flakes: { x: number; y: number; radius: number; speed: number; phase: number }[] = [];
+		canvas.style.zIndex = String(snowConfig.zIndex);
+
+		function resize() {
+			width = window.innerWidth;
+			height = window.innerHeight;
+			const ratio = Math.min(devicePixelRatio || 1, 2);
+			canvas.width = width * ratio;
+			canvas.height = height * ratio;
+			canvas.style.width = `${width}px`;
+			canvas.style.height = `${height}px`;
+			ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+			const count = Math.max(0, Math.min(200, Math.round(snowConfig.count * (width < 768 ? 0.5 : 1))));
+			flakes = Array.from({ length: count }, () => ({
+				x: Math.random() * width, y: Math.random() * height,
+				radius: 1.5 + Math.random() * 3,
+				speed: 18 + Math.random() * 30, phase: Math.random() * Math.PI * 2,
+			}));
+		}
+
+		function draw(time: number) {
+			const delta = previous ? Math.min((time - previous) / 1000, 0.05) : 0;
+			previous = time;
+			ctx.clearRect(0, 0, width, height);
+			for (const flake of flakes) {
+				flake.y += flake.speed * delta;
+				flake.x += Math.sin(time / 1600 + flake.phase) * 12 * delta;
+				if (flake.y > height + 8) { flake.y = -8; flake.x = Math.random() * width; }
+				ctx.beginPath();
+				ctx.strokeStyle = "rgba(255,255,255,0.8)";
+				ctx.fillStyle = "rgba(255,255,255,0.7)";
+				ctx.lineWidth = 1;
+				ctx.shadowColor = "rgba(70,90,120,0.5)";
+				ctx.shadowBlur = 2;
+				if (flake.radius > 3) {
+					for (let arm = 0; arm < 3; arm++) {
+						const angle = arm * Math.PI / 3 + flake.phase;
+						const x = Math.cos(angle) * flake.radius;
+						const y = Math.sin(angle) * flake.radius;
+						ctx.moveTo(flake.x - x, flake.y - y);
+						ctx.lineTo(flake.x + x, flake.y + y);
+					}
+					ctx.stroke();
+				} else {
+					ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			}
+			frame = requestAnimationFrame(draw);
+		}
+
+		function sync() {
+			cancelAnimationFrame(frame);
+			previous = 0;
+			canvas.hidden = !enabled || reducedMotion.matches || document.hidden;
+			if (!canvas.hidden) frame = requestAnimationFrame(draw);
+		}
+		window.addEventListener("snowToggle", (event) => {
+			enabled = (event as CustomEvent<{ enabled: boolean }>).detail.enabled;
+			sync();
+		});
+		window.addEventListener("resize", resize);
+		document.addEventListener("visibilitychange", sync);
+		reducedMotion.addEventListener("change", sync);
+		resize();
+		sync();
+	}
+</script>

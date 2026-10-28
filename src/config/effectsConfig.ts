@@ -1,4 +1,11 @@
-import type { SakuraConfig } from "../types/effectsConfig";
+import type { SakuraConfig, SnowConfig } from "../types/effectsConfig";
+
+// 雪花独立于樱花开关，可在外观设置的特效页切换。
+export const snowConfig: SnowConfig = {
+	enable: true,
+	count: 48,
+	zIndex: 100,
+};
 
 // 特效配置 - 集中管理所有动画特效
 
