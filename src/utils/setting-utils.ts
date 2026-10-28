@@ -65,6 +65,7 @@ export function resolveTheme(theme: LIGHT_DARK_MODE): LIGHT_DARK_MODE {
 }
 
 export function getHue(): number {
+	if (!displaySettingsConfig.themeColorSwitchable) return getDefaultHue();
 	// 先检查全局对象
 	if (typeof window === "undefined" || !window.localStorage) {
 		return getDefaultHue();

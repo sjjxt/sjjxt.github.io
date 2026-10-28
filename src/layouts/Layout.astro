@@ -399,8 +399,8 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
         isDark ? darkTheme : lightTheme
       );
 
-      // Load the hue from local storage
-      const hue = localStorage.getItem("hue") || configHue;
+      // 主题色固定使用站点配置，不再读取调色盘保存的旧色相。
+      const hue = String(configHue);
       document.documentElement.style.setProperty("--hue", hue);
 
       // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值

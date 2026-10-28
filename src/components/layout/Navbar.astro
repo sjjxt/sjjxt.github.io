@@ -3,14 +3,13 @@ import { Picture } from "astro:assets";
 import * as path from "node:path";
 import type { ImageMetadata } from "astro";
 import { Icon } from "astro-icon/components";
-import DisplaySettings from "@/components/controls/DisplaySettingsIntegrated.svelte";
+import EffectsSettings from "@/components/controls/EffectsSettings.svelte";
 import LightDarkSwitch from "@/components/controls/LightDarkSwitch.svelte";
 import LanguageSwitch from "@/components/controls/LanguageSwitch.astro";
 import Search from "@/components/controls/Search.svelte";
 import MusicPlayer from "@/components/features/MusicPlayer.astro";
 import {
 	backgroundWallpaper,
-	displaySettingsConfig,
 	siteConfig,
 } from "@/config";
 import { musicPlayerConfig } from "@/config/musicConfig";
@@ -57,14 +56,6 @@ const navbarTitle = siteConfig.navbar.title || siteConfig.title;
 const navbarWidthFull = siteConfig.navbar.widthFull ?? false;
 const navbarMenuAlign = siteConfig.navbar.menuAlign ?? "center";
 const isNavbarMenuCentered = navbarMenuAlign === "center";
-
-// 检查是否有任何显示设置可用（总开关关闭时下方各项均为 false）
-const isDisplaySettingsEnabled = displaySettingsConfig.enable;
-const showThemeColor = displaySettingsConfig.themeColorSwitchable;
-const isWallpaperSwitchable = displaySettingsConfig.wallpaperModeSwitchable;
-const allowLayoutSwitch = displaySettingsConfig.layoutSwitchable;
-const hasDisplaySettings =
-	showThemeColor || isWallpaperSwitchable || allowLayoutSwitch;
 
 // 解析导航栏链接（按 siteConfig.pages 过滤 + i18n 名称），桌面下拉与移动抽屉共用
 const links: NavBarLink[] = resolveNavMenuLinks();
@@ -223,9 +214,9 @@ const logoVariants = await Promise.all(
                         <span class="bg-player-icon-pause hidden"><Icon name="material-symbols:pause-rounded" class="text-[1.5rem]" /></span>
                     </button>
                 )}
-                {hasDisplaySettings && (
-                        <button aria-label="Display Settings" aria-controls="display-setting" aria-expanded="false" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="display-settings-switch">
-                            <Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
+                {(
+                        <button aria-label="特效设置" title="特效设置" aria-controls="display-setting" aria-expanded="false" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="display-settings-switch">
+                            <Icon name="material-symbols:auto-awesome-rounded" class="text-[1.25rem]"></Icon>
                         </button>
                 )}
                 {/* @ts-ignore */}
@@ -240,7 +231,7 @@ const logoVariants = await Promise.all(
                 <MusicPlayer />
             </div>
         )}
-        {isDisplaySettingsEnabled && <DisplaySettings client:load></DisplaySettings>}
+        <EffectsSettings client:load />
     </div>
 </div>
 
