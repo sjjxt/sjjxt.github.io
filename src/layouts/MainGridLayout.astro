@@ -8,6 +8,7 @@ import NavMenuPanel from "@components/layout/NavMenuPanel.astro";
 import SideBar from "@components/layout/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import FloatingControls from "@/components/controls/FloatingControls.astro";
+import BlogIntro from "@/components/layout/BlogIntro.astro";
 import CategoryBar from "@/components/layout/CategoryBar.astro";
 import SidebarColumn from "@/components/layout/SidebarColumn.astro";
 import WallpaperSection from "@/components/layout/WallpaperSection.astro";
@@ -96,6 +97,7 @@ const {
 <Layout title={title} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug} postCoverImage={postCoverImage} ogImageWidth={ogImageWidth} ogImageHeight={ogImageHeight} ogImageAlt={ogImageAlt} hasWallpaper={hasWallpaper}>
 
 <slot slot="head" name="head" />
+{isHomePageCheck && <BlogIntro />}
 <HeaderTopRow navbarMode={navbarMode} navbarWidthFull={navbarWidthFull} />
 
 <WallpaperSection state={banner} backgroundImages={backgroundImages} title={title} bannerPostMeta={bannerPostMeta} />

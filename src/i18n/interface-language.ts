@@ -10,6 +10,8 @@ const pairs: [string, string][] = Object.entries(zh_CN)
 
 // Custom navigation labels and interface text outside the theme dictionaries.
 pairs.push(
+	["雪花特效", "Snow Effect"],
+	["飘落特效", "Falling Effects"],
 	["文章", "Articles"],
 	["追番目录", "Anime List"],
 	["B站", "Bilibili Profile"],

@@ -1,0 +1,23 @@
+name: sjjxt-blog
+
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:4321:8080"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=4m,mode=1777
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/index.html"]
+      start_period: 5s
+      start_interval: 1s
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: local
+      options:
+        max-size: "1m"
+        max-file: "2"

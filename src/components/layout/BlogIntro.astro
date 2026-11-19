@@ -1,0 +1,356 @@
+---
+import { Icon } from "astro-icon/components";
+import { url } from "@/utils/url-utils";
+---
+
+<dialog id="blog-intro" aria-labelledby="blog-intro-title">
+	<div class="intro-media" aria-hidden="true">
+		<img
+			class="intro-poster"
+			src={url("/imge/blog-intro-poster.webp")}
+			width="1280"
+			height="720"
+			alt=""
+			loading="lazy"
+		/>
+		<video
+			class="intro-video"
+			data-src={url("/imge/blog-intro.mp4")}
+			preload="none"
+			loop
+			playsinline
+		></video>
+	</div>
+
+	<div class="intro-content">
+		<h2 id="blog-intro-title">
+			<img
+				class="intro-title-image"
+				src={url("/imge/blog-intro-title.avif")}
+				alt="酣梦于彼岸深红"
+				width="1120"
+				height="560"
+				loading="lazy"
+			/>
+		</h2>
+		<button class="intro-enter" type="button">
+			进入博客 <span aria-hidden="true">→</span>
+		</button>
+	</div>
+	<button class="intro-sound" type="button" aria-label="背景视频声音" aria-pressed="false" disabled>
+		<Icon name="material-symbols:volume-off-rounded" class="intro-sound-icon intro-sound-off" aria-hidden="true" />
+		<Icon name="material-symbols:volume-up-rounded" class="intro-sound-icon intro-sound-on" aria-hidden="true" />
+		<span class="intro-sound-off" aria-hidden="true">开启声音</span>
+		<span class="intro-sound-on" aria-hidden="true">关闭声音</span>
+	</button>
+</dialog>
+
+<script is:inline>
+	(() => {
+		const dialog = document.getElementById("blog-intro");
+		if (!dialog?.showModal || dialog.open) return;
+
+		const initialUrl = new URL(location.href);
+		const replay = initialUrl.searchParams.get("intro") === "1";
+		const sessionKey = "sjjxt-blog-intro-seen";
+		try {
+			if (!replay && sessionStorage.getItem(sessionKey)) return;
+		} catch {
+			// A browser can disable storage while still allowing the intro.
+		}
+		if (!replay && initialUrl.hash) return;
+
+		const enter = dialog.querySelector(".intro-enter");
+		const sound = dialog.querySelector(".intro-sound");
+		const video = dialog.querySelector("video");
+		const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+		const listeners = new AbortController();
+		const { signal } = listeners;
+
+		dialog.showModal();
+		try {
+			sessionStorage.setItem(sessionKey, "1");
+		} catch {
+			// The button works even when the visit cannot be remembered.
+		}
+
+		function setVideoSound(enabled) {
+			video.muted = !enabled;
+			sound.setAttribute("aria-pressed", String(!video.muted));
+		}
+
+		function stopVideo() {
+			dialog.removeAttribute("data-playing");
+			sound.disabled = true;
+			setVideoSound(false);
+			if (!video.hasAttribute("src")) return;
+			video.pause();
+			video.removeAttribute("src");
+			video.load();
+		}
+
+		function closeIntro() {
+			if (!dialog.open) return;
+			listeners.abort();
+			stopVideo();
+			dialog.close();
+
+			const currentUrl = new URL(location.href);
+			if (replay && currentUrl.pathname === initialUrl.pathname) {
+				currentUrl.searchParams.delete("intro");
+				history.replaceState(history.state, "", currentUrl);
+			}
+		}
+
+		function playVideo() {
+			video.play().catch((error) => {
+				if (error.name === "AbortError" || !video.paused) return;
+				if (error.name === "NotAllowedError" && !video.muted) {
+					setVideoSound(false);
+					playVideo();
+					return;
+				}
+				dialog.removeAttribute("data-playing");
+			});
+		}
+
+		function updatePlayback() {
+			if (reducedMotion.matches) {
+				stopVideo();
+				return;
+			}
+			if (document.hidden) {
+				video.pause();
+				return;
+			}
+			if (!video.hasAttribute("src")) {
+				setVideoSound(true);
+				video.src = video.dataset.src;
+			}
+			sound.disabled = false;
+			playVideo();
+		}
+
+		sound.addEventListener("click", () => {
+			setVideoSound(video.muted);
+			if (!video.muted || video.paused) playVideo();
+		}, { signal });
+
+		enter.addEventListener("click", () => {
+			if (reducedMotion.matches || !dialog.animate) {
+				closeIntro();
+				return;
+			}
+			dialog
+				.animate({ opacity: [1, 0] }, { duration: 460, easing: "ease-in-out", fill: "forwards" })
+				.finished.then(closeIntro, closeIntro);
+		}, { once: true, signal });
+
+		dialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			closeIntro();
+		}, { signal });
+		video.addEventListener("playing", () => {
+			dialog.setAttribute("data-playing", "");
+		}, { signal });
+		video.addEventListener("error", stopVideo, { signal });
+		reducedMotion.addEventListener("change", updatePlayback, { signal });
+		document.addEventListener("visibilitychange", updatePlayback, { signal });
+		document.addEventListener("swup:visit:start", closeIntro, { signal });
+		window.addEventListener("pagehide", closeIntro, { signal });
+		updatePlayback();
+	})();
+</script>
+
+<style>
+	:global(html:has(#blog-intro[open])) {
+		overflow: hidden;
+	}
+
+	#blog-intro {
+		position: fixed;
+		inset: 0;
+		box-sizing: border-box;
+		width: 100%;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		overflow: hidden;
+		background: #1a0d14;
+		color: #fff2df;
+	}
+
+	#blog-intro[open] {
+		display: grid;
+		align-items: end;
+	}
+
+	#blog-intro::backdrop {
+		background: transparent;
+	}
+
+	.intro-media,
+	.intro-media::after,
+	.intro-poster,
+	.intro-video {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	.intro-media {
+		pointer-events: none;
+	}
+
+	.intro-media::after {
+		content: "";
+		background:
+			linear-gradient(90deg, #13070ede 0%, #1b0c156e 39%, #200f1800 75%),
+			linear-gradient(0deg, #13080fd1 0%, #1a0a1200 56%);
+	}
+
+	.intro-poster,
+	.intro-video {
+		object-fit: cover;
+		object-position: 60% center;
+	}
+
+	.intro-video {
+		opacity: 0;
+		transition: opacity 620ms ease;
+	}
+
+	#blog-intro[data-playing] .intro-video {
+		opacity: 1;
+	}
+
+	.intro-content {
+		position: relative;
+		width: min(42vw, 42rem);
+		margin-inline-start: clamp(2rem, 6vw, 7rem);
+		padding-block-end: max(9svh, calc(env(safe-area-inset-bottom) + 2rem));
+		text-align: center;
+	}
+
+	#blog-intro-title {
+		margin: 0;
+		color: inherit;
+		font-size: clamp(2.5rem, 6vw, 6.5rem);
+		line-height: 1;
+	}
+
+	.intro-title-image {
+		display: block;
+		width: 100%;
+		height: auto;
+		filter: drop-shadow(0 0.7rem 1.1rem #12070ebe);
+	}
+
+	.intro-enter {
+		display: inline-flex;
+		min-height: 3.125rem;
+		align-items: center;
+		justify-content: center;
+		gap: 0.9rem;
+		margin-block-start: 1.125rem;
+		padding: 0.65rem 1.65rem;
+		border: 1px solid #fff0d7b8;
+		border-radius: 0.3rem;
+		background: #4b1b2ae8;
+		color: #fff3e3;
+		font-weight: 650;
+		letter-spacing: 0.08em;
+		box-shadow: 0 0.4rem 1.5rem #12070e66;
+		cursor: pointer;
+		transition: background-color 180ms ease, border-color 180ms ease;
+	}
+
+	.intro-enter:hover {
+		border-color: #fff6e7;
+		background: #70263a;
+	}
+
+	.intro-enter:focus-visible,
+	.intro-sound:focus-visible {
+		outline: 2px solid #fff0d7;
+		outline-offset: 4px;
+	}
+
+	.intro-sound {
+		position: absolute;
+		top: max(1rem, calc(env(safe-area-inset-top) + 0.625rem));
+		right: max(1rem, calc(env(safe-area-inset-right) + 0.625rem));
+		display: inline-flex;
+		min-height: 44px;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.375rem 0.7rem;
+		border: 1px solid #fff0d78c;
+		border-radius: 0.4rem;
+		background: #1a0d14e8;
+		color: #fff3e3;
+		font-size: 0.875rem;
+		cursor: pointer;
+	}
+
+	.intro-sound:hover:not(:disabled),
+	.intro-sound[aria-pressed="true"] {
+		background: #4b1b2a;
+		border-color: #fff0d7c9;
+	}
+
+	.intro-sound:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+
+	.intro-sound-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+
+	.intro-sound[aria-pressed="false"] .intro-sound-on,
+	.intro-sound[aria-pressed="true"] .intro-sound-off {
+		display: none;
+	}
+
+	@media (max-width: 700px) and (orientation: portrait) {
+		.intro-content {
+			width: min(88%, 28rem);
+			margin-inline: auto;
+			padding-block-end: max(8svh, calc(env(safe-area-inset-bottom) + 1.75rem));
+		}
+
+		.intro-media::after {
+			background: linear-gradient(180deg, #1a0d1400 25%, #1a0d145c 48%, #1a0d14 70%);
+		}
+
+		.intro-poster,
+		.intro-video {
+			height: 70%;
+			object-position: 68% center;
+		}
+	}
+
+	@media (max-height: 480px) and (orientation: landscape) {
+		.intro-content {
+			width: min(44vw, 70svh);
+			padding-block-end: max(5svh, calc(env(safe-area-inset-bottom) + 0.75rem));
+		}
+
+		.intro-enter {
+			margin-block-start: 0.5rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.intro-video,
+		.intro-enter {
+			transition: none;
+		}
+	}
+</style>

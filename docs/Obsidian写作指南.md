@@ -45,17 +45,11 @@ Obsidian 负责编辑本地 Markdown，Astro 负责把文章生成网页。Obsid
 在博客根目录 D:\LJR\blog 的 PowerShell 中运行：
 
 ```powershell
-npm.cmd run dev
+pnpm dev
 ```
 
 打开终端实际显示的 Local 地址，编辑并保存后看更新。当前 4321 若正被正式预览占用，开发预览可能使用其他端口。
 
-需要更新正式静态预览或生成部署文件时运行：
-
-```powershell
-npm.cmd run build
-```
-
-构建成功后刷新预览。当前还未配置公网部署，不会自动发布到互联网。
+需要更新本机正式预览时，双击 `cmd/一键构建博客.cmd`，构建成功后刷新 Docker 博客页面。发布到公网的步骤见 [GitHub Pages 发布说明](./GitHub-Pages发布说明.md)。
 
 参考：[Obsidian 仓库管理](https://obsidian.md/help/Files+and+folders/Manage+vaults)、[模板](https://obsidian.md/help/plugins/templates)、[设置](https://obsidian.md/help/settings)。

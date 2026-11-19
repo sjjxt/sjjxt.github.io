@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title 世界级小偷 - 一键构建博客
+title sjjxt - 一键构建博客
 
 rem Always build from the project root above this file's folder, including when opened via a shortcut.
 pushd "%~dp0.."
@@ -22,11 +22,15 @@ rem Use the project's pnpm version; avoid the global pnpm version-switch issue.
 call npm.cmd exec --yes --registry=https://registry.npmjs.org --package=pnpm@11.22.0 -- pnpm build
 if errorlevel 1 goto build_error
 
+echo 正在将本次构建的网页装入 Docker……
+call "%~dp0打开博客.cmd" --no-open --build
+if errorlevel 1 goto docker_error
+
 echo.
 echo ============================================================
-echo 构建成功！文章、动态和搜索索引已更新。
+echo 构建成功！文章、动态和搜索索引已更新到本机 Docker。
 echo 生成的网站位于：%CD%\dist
-echo 现在可以刷新本地博客预览页面。
+echo 现在可以打开或刷新 http://127.0.0.1:4321/
 echo 本操作只生成本地网站，不会自动发布到互联网。
 echo ============================================================
 set "blogExitCode=0"
@@ -38,7 +42,7 @@ set "blogExitCode=1"
 goto finish
 
 :dependency_error
-echo 尚未安装项目依赖，请先按“开始使用.md”中的说明安装依赖。
+echo 尚未安装项目依赖，请先按 README.md 中的说明安装依赖。
 set "blogExitCode=1"
 goto finish
 
@@ -46,6 +50,11 @@ goto finish
 echo.
 echo 构建失败，请查看上方的错误信息。
 echo 可以截图此窗口让我排查，修复后再双击重试。
+set "blogExitCode=1"
+goto finish
+
+:docker_error
+echo 网页已生成，Docker 更新失败。修复上面的错误后可在项目目录运行 docker compose up -d --build --wait。
 set "blogExitCode=1"
 goto finish
 
